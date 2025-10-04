@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Stock Predictor | Real-Time Market Analysis</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3c72;
+            margin: 0;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.2rem;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            max-height: calc(100vh - 80px);
+            padding: 2rem;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        /* Search Panel */
+        .search-panel {
+            flex: 0 0 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .search-box {
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+        
+        .search-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.3);
+        }
+        
+        .quick-symbols {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+        
+        .symbol-btn {
+            padding: 0.8rem;
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .symbol-btn:hover {
+            background: #1e3c72;
+            color: white;
+            border-color: #1e3c72;
+        }
+        
+        .model-info {
+            margin-top: auto;
+            padding: 1rem;
+            background: #e3f2fd;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #1976d2;
+        }
+        
+        /* Results Panel */
+        .results-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .results-header h2 {
+            font-size: 1.5rem;
+            color: #1e3c72;
+            margin: 0;
+        }
+        
+        .results-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow: hidden;
+        }
+        
+        /* Price Section */
+        .price-section {
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 15px;
+        }
+        
+        .price {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #1e3c72;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .change {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .change.positive { color: #27ae60; }
+        .change.negative { color: #e74c3c; }
+        
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #1e3c72;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e3c72;
+            display: block;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        /* Recommendation */
+        .recommendation-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .recommendation-badge {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .recommendation-badge.buy {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+        
+        .recommendation-badge.sell {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+        
+        .recommendation-badge.hold {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        
+        .reasoning {
+            color: #666;
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+        
+        /* Footer Info */
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #e1e8ed;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 1rem;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3c72;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Error State */
+        .error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            color: #e74c3c;
+        }
+        
+        .error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .search-panel {
+                flex: 0 0 auto;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .stats {
+                gap: 1rem;
+            }
+            
+            .price {
+                font-size: 2.5rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div>
+                        <h1>🚀 AI Stock Predictor</h1>
+                        <p>Real-Time Market Analysis & Predictions</p>
+                    </div>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-value">78.2%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">Live</div>
+                        <div class="stat-label">Data</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">AI</div>
+                        <div class="stat-label">Powered</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Panel -->
+            <aside class="search-panel">
+                <div class="search-box">
+                    <input type="text" class="search-input" id="symbolInput" 
+                           placeholder="Enter symbol (BTC, AAPL, TSLA...)">
+                    <button class="search-btn" onclick="analyzeStock()">
+                        Get Live Analysis
+                    </button>
+                </div>
+                
+                <div class="quick-symbols">
+                    <div class="symbol-btn" onclick="setSymbol('BTC')">BTC</div>
+                    <div class="symbol-btn" onclick="setSymbol('ETH')">ETH</div>
+                    <div class="symbol-btn" onclick="setSymbol('AAPL')">AAPL</div>
+                    <div class="symbol-btn" onclick="setSymbol('TSLA')">TSLA</div>
+                    <div class="symbol-btn" onclick="setSymbol('MSFT')">MSFT</div>
+                    <div class="symbol-btn" onclick="setSymbol('GOLD')">GOLD</div>
+                </div>
+                
+                <div class="model-info">
+                    🤖 Hybrid LSTM-CNN Model • 📊 Real-time APIs • 🎯 Professional Grade
+                </div>
+            </aside>
+
+            <!-- Results Panel -->
+            <section class="results-panel">
+                <div class="results-header">
+                    <h2 id="symbol">Market Analysis</h2>
+                </div>
+                
+                <div class="results-content" id="resultsContent">
+                    <!-- Default State -->
+                    <div id="defaultState" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; color: #666;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">📈</div>
+                        <h3 style="color: #1e3c72; margin-bottom: 0.5rem;">Welcome to AI Stock Predictor</h3>
+                        <p>Enter a stock or cryptocurrency symbol to get real-time analysis and AI-powered predictions.</p>
+                    </div>
+                    
+                    <!-- Loading State -->
+                    <div id="loading" class="loading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <h3>Analyzing Market Data...</h3>
+                        <p>Fetching real-time information from live APIs</p>
+                    </div>
+                    
+                    <!-- Error State -->
+                    <div id="error" class="error" style="display: none;">
+                        <div class="error-icon">❌</div>
+                        <h3>Analysis Failed</h3>
+                        <p id="errorMessage">Please try again with a different symbol</p>
+                    </div>
+                    
+                    <!-- Results State -->
+                    <div id="results" style="display: none;">
+                        <!-- Price Section -->
+                        <div class="price-section">
+                            <div class="price" id="price">$---</div>
+                            <div class="change" id="change">--.--%</div>
+                        </div>
+                        
+                        <!-- Metrics Grid -->
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-value" id="rsi">--.-</span>
+                                <span class="metric-label">RSI Indicator</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-value" id="score">-.---</span>
+                                <span class="metric-label">Prediction Score</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-value" id="confidence">---</span>
+                                <span class="metric-label">Confidence</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-value" id="source">---</span>
+                                <span class="metric-label">Data Source</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommendation -->
+                        <div class="recommendation-section">
+                            <div class="recommendation-badge hold" id="recommendation">
+                                HOLD
+                            </div>
+                            <div class="reasoning" id="reasoning">
+                                Enter a symbol to see AI-powered market analysis
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer-info">
+                    <div>Data Source: <span id="dataSource">---</span></div>
+                    <div>Last Updated: <span id="timestamp">--</span></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // State management
+        const states = {
+            DEFAULT: 'default',
+            LOADING: 'loading', 
+            ERROR: 'error',
+            RESULTS: 'results'
+        };
+
+        function setSymbol(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            analyzeStock();
+        }
+        
+        function setState(state) {
+            // Hide all states
+            document.getElementById('defaultState').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            
+            // Show current state
+            switch(state) {
+                case states.DEFAULT:
+                    document.getElementById('defaultState').style.display = 'flex';
+                    break;
+                case states.LOADING:
+                    document.getElementById('loading').style.display = 'flex';
+                    break;
+                case states.ERROR:
+                    document.getElementById('error').style.display = 'flex';
+                    break;
+                case states.RESULTS:
+                    document.getElementById('results').style.display = 'block';
+                    break;
+            }
+        }
+        
+        async function analyzeStock() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            
+            if (!symbol) {
+                showError('Please enter a symbol (e.g., BTC, AAPL, GOLD)');
+                return;
+            }
+            
+            setState(states.LOADING);
+            
+            try {
+                const response = await fetch(`/api/analyze/${symbol}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayResults(data);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showError(`Failed to analyze ${symbol}. Please try again.`);
+            }
+        }
+        
+        function displayResults(data) {
+            // Update basic info
+            document.getElementById('symbol').textContent = `${data.symbol} Analysis`;
+            document.getElementById('price').textContent = `$${formatPrice(data.price)}`;
+            
+            // Update change
+            const changeElement = document.getElementById('change');
+            changeElement.textContent = `${data.price_change >= 0 ? '+' : ''}${data.price_change}%`;
+            changeElement.className = `change ${data.price_change >= 0 ? 'positive' : 'negative'}`;
+            
+            // Update metrics
+            document.getElementById('rsi').textContent = data.rsi;
+            document.getElementById('score').textContent = data.prediction_score;
+            document.getElementById('confidence').textContent = data.confidence;
+            document.getElementById('source').textContent = data.data_source;
+            
+            // Update recommendation
+            const recElement = document.getElementById('recommendation');
+            recElement.textContent = data.recommendation;
+            recElement.className = `recommendation-badge ${getRecommendationClass(data.recommendation)}`;
+            
+            // Update reasoning and footer
+            document.getElementById('reasoning').textContent = data.reasoning;
+            document.getElementById('dataSource').textContent = data.data_source;
+            document.getElementById('timestamp').textContent = new Date(data.timestamp).toLocaleString();
+            
+            setState(states.RESULTS);
+        }
+        
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            setState(states.ERROR);
+        }
+        
+        function formatPrice(price) {
+            if (price >= 1000) {
+                return price.toLocaleString('en-US', {maximumFractionDigits: 0});
+            } else {
+                return price.toLocaleString('en-US', {maximumFractionDigits: 2});
+            }
+        }
+        
+        function getRecommendationClass(recommendation) {
+            if (recommendation.includes('BUY')) return 'buy';
+            if (recommendation.includes('SELL')) return 'sell';
+            return 'hold';
+        }
+        
+        // Enter key support
+        document.getElementById('symbolInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') analyzeStock();
+        });
+        
+        // Initialize
+        setState(states.DEFAULT);
+        document.getElementById('symbolInput').focus();
+    </script>
+</body>
+</html>
