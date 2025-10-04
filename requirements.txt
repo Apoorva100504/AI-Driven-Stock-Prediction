@@ -122,3 +122,4 @@ xdg==5
 xkit==0.0.0
 yfinance==0.2.66
 zipp==1.0.0
+flask-cors==4.0.0
