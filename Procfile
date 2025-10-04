@@ -1,1 +1,1 @@
-web: python real_api_backend.py
+web: gunicorn real_api_backend:app
